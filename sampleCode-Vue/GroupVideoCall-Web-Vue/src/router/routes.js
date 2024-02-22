@@ -1,7 +1,9 @@
-import Multiple from '../views/multiple/index.vue'
+import Multiple from "../views/multiple/index.vue";
 
-export default [{
-  path: '/multiple',
-  name: 'multiple',
-  component: Multiple
-}]
+export default [
+  {
+    path: "/multiple",
+    name: "multiple",
+    component: Multiple,
+  },
+];

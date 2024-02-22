@@ -95,215 +95,215 @@
 </template>
 
 <script>
-    import { message } from '../../components/message';
-    import { checkBrowser } from '../../common';
-    import NERTC from 'nertc-web-sdk'
-    export default {
-        name: 'join',
-        data() {
-            return {
-                channelName: '',
-                extraChannelName: '',
-                isSupport: true,
-                isShowCustomEncryptionOption: false,
-                isShowExtraInput: false,
-                isShowProxyCheck: false,
-                isShowBeautyCheck: false,
-                isShowDualStreamCheck: false,
-                isShowRoleRadio: false,
-                isShowVideoEncodingOption: false,
-                isShowScreenShareOption: false,
-                role: 'host',
-                customEncryption: '',
-                cloudProxy: true,
-                dualStream: true,
-                beauty: true,
-                customSecret: '',
-                customEncryptionOptions: [
-                    {
-                        value: 'rc4',
-                        label: 'rc4',
-                    },
-                    {
-                        value: 'sm4',
-                        label: 'sm4-128-ecb',
-                    },
-                ],
-                screenShareOptions: [
-                    {
-                        value: 'detail',
-                        label: '清晰度优先',
-                    },
-                    {
-                        value: 'motion',
-                        label: '流畅度优先',
-                    },
-                ],
-                videoQuality: NERTC.VIDEO_QUALITY_720p,
-                videoQualityOptions: [
-                    {
-                        value: NERTC.VIDEO_QUALITY_180p,
-                        label: '320x180',
-                    },
-                    {
-                        value: NERTC.VIDEO_QUALITY_480p,
-                        label: '640x480',
-                    },
-                    {
-                        value: NERTC.VIDEO_QUALITY_720p,
-                        label: '1280x720',
-                    },
-                    {
-                        value: NERTC.VIDEO_QUALITY_1080p,
-                        label: '1920x1080',
-                    },
-                ],
-                videoFrameRate: 15,
-                videoFrameRateOptions: [
-                    {
-                        value: NERTC.CHAT_VIDEO_FRAME_RATE_5,
-                        label: 5,
-                    },
-                    {
-                        value: NERTC.CHAT_VIDEO_FRAME_RATE_10,
-                        label: 10,
-                    },
-                    {
-                        value: NERTC.CHAT_VIDEO_FRAME_RATE_15,
-                        label: 15,
-                    },
-                    {
-                        value: NERTC.CHAT_VIDEO_FRAME_RATE_20,
-                        label: 20,
-                    },
-                    {
-                        value: NERTC.CHAT_VIDEO_FRAME_RATE_25,
-                        label: 25,
-                    },
-                ],
-            };
+import { message } from "../../components/message";
+import { checkBrowser } from "../../common";
+import NERTC from "nertc-web-sdk";
+export default {
+  name: "join",
+  data() {
+    return {
+      channelName: "",
+      extraChannelName: "",
+      isSupport: true,
+      isShowCustomEncryptionOption: false,
+      isShowExtraInput: false,
+      isShowProxyCheck: false,
+      isShowBeautyCheck: false,
+      isShowDualStreamCheck: false,
+      isShowRoleRadio: false,
+      isShowVideoEncodingOption: false,
+      isShowScreenShareOption: false,
+      role: "host",
+      customEncryption: "",
+      cloudProxy: true,
+      dualStream: true,
+      beauty: true,
+      customSecret: "",
+      customEncryptionOptions: [
+        {
+          value: "rc4",
+          label: "rc4",
         },
-        mounted() {
-            if (!NERTC.checkSystemRequirements()) {
-                this.isSupport = false;
-            }
-            // 自定义加密需要进入房间前设置
-            if (this.$route.query.path === 'customEncryption') {
-                this.isShowCustomEncryptionOption = true;
-            } else if (this.$route.query.path === 'multipleInstances') {
-                this.isShowExtraInput = true;
-            } else if (this.$route.query.path === 'cloudProxy') {
-                this.isShowProxyCheck = true;
-            } else if (this.$route.query.path === 'dualStream') {
-                this.isShowDualStreamCheck = true;
-            } else if (this.$route.query.path === 'beauty') {
-                this.isShowBeautyCheck = true;
-            } else if (this.$route.query.path === 'basicLive') {
-                this.isShowRoleRadio = true;
-            } else if (this.$route.query.path === 'videoEncoding') {
-                this.isShowVideoEncodingOption = true;
-            } else if (this.$route.query.path === 'screenShare') {
-                this.isShowScreenShareOption = true;
-            }
+        {
+          value: "sm4",
+          label: "sm4-128-ecb",
         },
-        methods: {
-            handleSubmit() {
-                const {
-                    channelName,
-                    isShowExtraInput,
-                    extraChannelName,
-                    isShowCustomEncryptionOption,
-                    customEncryption,
-                    isShowProxyCheck,
-                    cloudProxy,
-                    customSecret,
-                    isShowDualStreamCheck,
-                    dualStream,
-                    isShowBeautyCheck,
-                    beauty,
-                    isShowRoleRadio,
-                    role,
-                    isShowVideoEncodingOption,
-                    videoQuality,
-                    videoFrameRate,
-                    isShowScreenShareOption,
-                } = this;
-
-                if (!channelName) {
-                    message('请输入房间号');
-                    return;
-                } else if (!/^[0-9]{1,12}$/.test(channelName)) {
-                    message('房间号为12位以内的数字');
-                    return;
-                }
-                if (isShowExtraInput) {
-                    if (!extraChannelName) {
-                        message('请输入房间号');
-                        return;
-                    } else if (!/^[0-9]{1,12}$/.test(extraChannelName)) {
-                        message('房间号为12位以内的数字');
-                        return;
-                    }
-                }
-                if (isShowCustomEncryptionOption && !customSecret) {
-                    message('请输入密钥');
-                    return;
-                }
-
-                if (isShowCustomEncryptionOption && !customEncryption) {
-                    message('请选择加密类型');
-                    return;
-                }
-                const { path = 'multiple' } = this.$route.query;
-                if (isShowCustomEncryptionOption) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName, customEncryption, customSecret },
-                    });
-                } else if (isShowExtraInput) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName, extraChannelName },
-                    });
-                } else if (isShowProxyCheck) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName, cloudProxy },
-                    });
-                } else if (isShowDualStreamCheck) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName, dualStream },
-                    });
-                } else if (isShowBeautyCheck) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName, beauty },
-                    });
-                } else if (isShowRoleRadio) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName, role },
-                    });
-                } else if (isShowVideoEncodingOption) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName, videoQuality, videoFrameRate },
-                    });
-                } else if (isShowScreenShareOption) {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName },
-                    });
-                } else {
-                    this.$router.push({
-                        path: `/${path}`,
-                        query: { channelName },
-                    });
-                }
-            },
+      ],
+      screenShareOptions: [
+        {
+          value: "detail",
+          label: "清晰度优先",
         },
+        {
+          value: "motion",
+          label: "流畅度优先",
+        },
+      ],
+      videoQuality: NERTC.VIDEO_QUALITY_720p,
+      videoQualityOptions: [
+        {
+          value: NERTC.VIDEO_QUALITY_180p,
+          label: "320x180",
+        },
+        {
+          value: NERTC.VIDEO_QUALITY_480p,
+          label: "640x480",
+        },
+        {
+          value: NERTC.VIDEO_QUALITY_720p,
+          label: "1280x720",
+        },
+        {
+          value: NERTC.VIDEO_QUALITY_1080p,
+          label: "1920x1080",
+        },
+      ],
+      videoFrameRate: 15,
+      videoFrameRateOptions: [
+        {
+          value: NERTC.CHAT_VIDEO_FRAME_RATE_5,
+          label: 5,
+        },
+        {
+          value: NERTC.CHAT_VIDEO_FRAME_RATE_10,
+          label: 10,
+        },
+        {
+          value: NERTC.CHAT_VIDEO_FRAME_RATE_15,
+          label: 15,
+        },
+        {
+          value: NERTC.CHAT_VIDEO_FRAME_RATE_20,
+          label: 20,
+        },
+        {
+          value: NERTC.CHAT_VIDEO_FRAME_RATE_25,
+          label: 25,
+        },
+      ],
     };
+  },
+  mounted() {
+    if (!NERTC.checkSystemRequirements()) {
+      this.isSupport = false;
+    }
+    // 自定义加密需要进入房间前设置
+    if (this.$route.query.path === "customEncryption") {
+      this.isShowCustomEncryptionOption = true;
+    } else if (this.$route.query.path === "multipleInstances") {
+      this.isShowExtraInput = true;
+    } else if (this.$route.query.path === "cloudProxy") {
+      this.isShowProxyCheck = true;
+    } else if (this.$route.query.path === "dualStream") {
+      this.isShowDualStreamCheck = true;
+    } else if (this.$route.query.path === "beauty") {
+      this.isShowBeautyCheck = true;
+    } else if (this.$route.query.path === "basicLive") {
+      this.isShowRoleRadio = true;
+    } else if (this.$route.query.path === "videoEncoding") {
+      this.isShowVideoEncodingOption = true;
+    } else if (this.$route.query.path === "screenShare") {
+      this.isShowScreenShareOption = true;
+    }
+  },
+  methods: {
+    handleSubmit() {
+      const {
+        channelName,
+        isShowExtraInput,
+        extraChannelName,
+        isShowCustomEncryptionOption,
+        customEncryption,
+        isShowProxyCheck,
+        cloudProxy,
+        customSecret,
+        isShowDualStreamCheck,
+        dualStream,
+        isShowBeautyCheck,
+        beauty,
+        isShowRoleRadio,
+        role,
+        isShowVideoEncodingOption,
+        videoQuality,
+        videoFrameRate,
+        isShowScreenShareOption,
+      } = this;
+
+      if (!channelName) {
+        message("请输入房间号");
+        return;
+      } else if (!/^[0-9]{1,12}$/.test(channelName)) {
+        message("房间号为12位以内的数字");
+        return;
+      }
+      if (isShowExtraInput) {
+        if (!extraChannelName) {
+          message("请输入房间号");
+          return;
+        } else if (!/^[0-9]{1,12}$/.test(extraChannelName)) {
+          message("房间号为12位以内的数字");
+          return;
+        }
+      }
+      if (isShowCustomEncryptionOption && !customSecret) {
+        message("请输入密钥");
+        return;
+      }
+
+      if (isShowCustomEncryptionOption && !customEncryption) {
+        message("请选择加密类型");
+        return;
+      }
+      const { path = "multiple" } = this.$route.query;
+      if (isShowCustomEncryptionOption) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName, customEncryption, customSecret },
+        });
+      } else if (isShowExtraInput) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName, extraChannelName },
+        });
+      } else if (isShowProxyCheck) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName, cloudProxy },
+        });
+      } else if (isShowDualStreamCheck) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName, dualStream },
+        });
+      } else if (isShowBeautyCheck) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName, beauty },
+        });
+      } else if (isShowRoleRadio) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName, role },
+        });
+      } else if (isShowVideoEncodingOption) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName, videoQuality, videoFrameRate },
+        });
+      } else if (isShowScreenShareOption) {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName },
+        });
+      } else {
+        this.$router.push({
+          path: `/${path}`,
+          query: { channelName },
+        });
+      }
+    },
+  },
+};
 </script>
 
 <style scoped lang="less">
@@ -367,7 +367,7 @@
         color: #b0b6be;
       }
     }
-    .extra-input{
+    .extra-input {
       margin-top: -20px;
     }
 
