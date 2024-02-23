@@ -305,17 +305,37 @@ export default {
         );
     },
     closeShare() {
-      return this.localStream
+      this.localStream
         .close({
           type: "screen",
         })
+        .then(() => {
+          console.warn("关闭摄像头 sucess");
+        })
+        .catch((err) => {
+          console.warn("关闭摄像头失败: ", err);
+          message("关闭摄像头失败");
+        });
+      this.localStream.stop();
+      this.localStream
+        .open({
+          type: "video",
+        })
         .then(
           () => {
+            console.log("正在打开屏幕共享");
+            const div = this.$refs.large;
+            this.localStream.play(div);
+            this.localStream.setLocalRenderMode({
+              // 设置视频窗口大小
+              width: div.clientWidth,
+              height: div.clientHeight,
+              cut: false, // 是否裁剪
+            });
             this.isSharing = false;
-            console.warn("关闭屏幕共享 success");
           },
           (err) => {
-            console.error("关闭屏幕共享 error: ", err);
+            console.error("打开屏幕共享失败: ", err);
           }
         );
     },
