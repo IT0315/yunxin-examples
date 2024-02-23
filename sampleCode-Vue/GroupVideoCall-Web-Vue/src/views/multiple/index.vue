@@ -5,14 +5,14 @@
       <div class="main-window" ref="large"></div>
       <div class="sub-window-wrapper">
         <!--小画面div-->
-        <template v-if="remoteStreams.length">
+        <template v-if="userList.length">
           <div
-            v-for="item in remoteStreams"
-            :key="item.getId()"
+            v-for="item in userList"
+            :key="item"
             class="sub-window"
             ref="small"
-            :data-uid="item.getId()"
-            @click="clickItem(item.getId())"
+            :data-uid="item"
+            @click="clickItem(item)"
           ></div>
         </template>
         <div v-else class="sub-window" ref="small">
@@ -29,6 +29,11 @@
       ></li>
       <li class="over" @click="handleOver"></li>
       <li :class="{ stop: true, isStop }" @click="stopOrOpenVideo"></li>
+      <li class="set-wrapper" @click="toggleShareScreen">
+        <a href="javascript:;" class="set">{{
+          isSharing ? "停止共享" : "开始共享"
+        }}</a>
+      </li>
     </ul>
   </div>
 </template>
@@ -50,9 +55,12 @@ export default {
       remoteStreams: [],
       userList: [],
       max: 20,
+      isSharing: false,
+      currentUid: this.localUid,
     };
   },
   mounted() {
+    this.currentUid = this.localUid;
     // 初始化音视频实例
     console.warn("初始化音视频sdk");
     window.self = this;
@@ -62,6 +70,7 @@ export default {
     });
     //监听事件
     this.client.on("peer-online", (evt) => {
+      this.userList.push(evt.uid);
       console.warn(`${evt.uid} 加入房间`);
     });
 
@@ -207,6 +216,15 @@ export default {
   },
   methods: {
     async clickItem(userId) {
+      console.log("this.currentUid", this.currentUid);
+      console.log("userId", userId);
+      console.log("this.localUid", this.localUid);
+      // 如果当前展示的id跟点击的id一致则不做切换
+      if (this.currentUid == userId) {
+        return;
+      }
+      console.log("this.localStream", this.localStream.getId());
+
       // 关闭主摄像头
       this.localStream.stop();
       const remoteStream = this.remoteStreams.find(
@@ -223,7 +241,8 @@ export default {
         });
       });
       const div1 = [...this.$refs.small].find((item) => {
-        return Number(item.dataset.uid) === Number(remoteStream.getId());
+        console.log("item.dataset.uid", item.dataset.uid);
+        return Number(item.dataset.uid) === Number(this.localUid);
       });
       this.localStream.play(div1).then(() => {
         this.localStream.setLocalRenderMode({
@@ -233,6 +252,72 @@ export default {
           cut: false, // 是否裁剪
         });
       });
+
+      this.currentUid = userId;
+    },
+    toggleShareScreen() {
+      if (!this.localStream) {
+        throw Error("内部错误，请重新加入房间");
+      }
+      if (this.isSharing) {
+        this.closeShare();
+      } else {
+        this.openShare();
+      }
+    },
+    openShare() {
+      this.localStream
+        .close({
+          type: "video",
+        })
+        .then(() => {
+          console.warn("关闭摄像头 sucess");
+        })
+        .catch((err) => {
+          console.warn("关闭摄像头失败: ", err);
+          message("关闭摄像头失败");
+        });
+      this.localStream.stop();
+      return this.localStream
+        .open({
+          type: "screen",
+        })
+        .then(
+          () => {
+            console.log("正在打开屏幕共享");
+            const div = this.$refs.large;
+            this.localStream.play(div);
+            this.localStream.setLocalRenderMode(
+              {
+                // 设置视频窗口大小
+                width: div.clientWidth,
+                height: div.clientHeight,
+                cut: false, // 是否裁剪
+              },
+              "screen"
+            );
+            this.isSharing = true;
+            console.warn("打开屏幕共享成功");
+          },
+          (err) => {
+            console.error("打开屏幕共享失败: ", err);
+          }
+        );
+    },
+    closeShare() {
+      return this.localStream
+        .close({
+          type: "screen",
+        })
+        .then(
+          () => {
+            this.isSharing = false;
+            console.warn("关闭屏幕共享 success");
+          },
+          (err) => {
+            console.error("关闭屏幕共享 error: ", err);
+          }
+        );
     },
     getToken() {
       return getToken({
@@ -273,6 +358,7 @@ export default {
         })
         .then((data) => {
           console.info("加入房间成功，开始初始化本地音视频流");
+          this.userList.push(this.localUid);
           this.initLocalStream();
         })
         .catch((error) => {
