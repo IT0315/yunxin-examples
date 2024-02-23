@@ -216,43 +216,63 @@ export default {
   },
   methods: {
     async clickItem(userId) {
-      console.log("this.currentUid", this.currentUid);
-      console.log("userId", userId);
-      console.log("this.localUid", this.localUid);
-      // 如果当前展示的id跟点击的id一致则不做切换
-      if (this.currentUid == userId) {
-        return;
-      }
-      console.log("this.localStream", this.localStream.getId());
-
-      // 关闭主摄像头
-      this.localStream.stop();
-      const remoteStream = this.remoteStreams.find(
-        (item) => item.getId() === userId
-      );
-      remoteStream.stop();
-      const div = this.$refs.large;
-      remoteStream.play(div).then(() => {
-        remoteStream.setRemoteRenderMode({
-          // 设置视频窗口大小
-          width: div.clientWidth,
-          height: div.clientHeight,
-          cut: false, // 是否裁剪
-        });
+      console.log("remoteStreams", this.remoteStreams);
+      this.remoteStreams.forEach((remoteStream) => {
+        console.log("v", remoteStream.getId());
+        remoteStream.stop();
+        if (remoteStream.getId() === userId) {
+          console.log("1111");
+          const div = this.$refs.large;
+          if (remoteStream.getId() == this.localUid) {
+            remoteStream.play(div).then(() => {
+              remoteStream.setLocalRenderMode({
+                // 设置视频窗口大小
+                width: div.clientWidth,
+                height: div.clientHeight,
+                cut: false, // 是否裁剪
+              });
+            });
+          } else {
+            remoteStream.play(div).then(() => {
+              remoteStream.setRemoteRenderMode({
+                // 设置视频窗口大小
+                width: div.clientWidth,
+                height: div.clientHeight,
+                cut: false, // 是否裁剪
+              });
+            });
+          }
+        } else {
+          const div1 = [...this.$refs.small].find((item) => {
+            return Number(item.dataset.uid) === Number(remoteStream.getId());
+          });
+          if (remoteStream.getId() == this.localUid) {
+            console.log("div1.clientWidth", div1.clientWidth);
+            console.log("div1.clientHeight", div1.clientHeight);
+            remoteStream.play(div1).then(() => {
+              remoteStream.setLocalRenderMode({
+                // 设置视频窗口大小
+                width: div1.clientWidth,
+                height: div1.clientHeight,
+                cut: false, // 是否裁剪
+              });
+            });
+            console.log("2222");
+          } else {
+            console.log("div1.clientWidth", div1.clientWidth);
+            console.log("div1.clientHeight", div1.clientHeight);
+            console.log("333333");
+            remoteStream.play(div1).then(() => {
+              remoteStream.setRemoteRenderMode({
+                // 设置视频窗口大小
+                width: div1.clientWidth,
+                height: div1.clientHeight,
+                cut: false, // 是否裁剪
+              });
+            });
+          }
+        }
       });
-      const div1 = [...this.$refs.small].find((item) => {
-        console.log("item.dataset.uid", item.dataset.uid);
-        return Number(item.dataset.uid) === Number(this.localUid);
-      });
-      this.localStream.play(div1).then(() => {
-        this.localStream.setLocalRenderMode({
-          // 设置视频窗口大小
-          width: 160,
-          height: 90,
-          cut: false, // 是否裁剪
-        });
-      });
-
       this.currentUid = userId;
     },
     toggleShareScreen() {
@@ -416,7 +436,7 @@ export default {
             height: div.clientHeight,
             cut: false, // 是否裁剪
           });
-          // this.remoteStreams = this.remoteStreams.concat(this.localStream);
+          this.remoteStreams = this.remoteStreams.concat(this.localStream);
           // 发布
           this.publish();
         })
