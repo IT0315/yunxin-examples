@@ -281,6 +281,22 @@ class WebRtcImpl {
       return Promise.reject(error);
     }
   }
+
+  async enableLocalScreen(enabled) {
+    // 先关闭
+    try {
+      await this.localStream.close({
+        type: enabled ? "screen" : "video",
+      });
+      await this.localStream.stop();
+      await this.localStream.open({
+        type: enabled ? "video" : "screen",
+      });
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
 }
 
 export default WebRtcImpl;

@@ -2,7 +2,7 @@
   <div class="wrapper">
     <div class="content">
       <!--画面div-->
-      <div class="main-window" ref="large"></div>
+      <div class="main-window" id="large" ref="large"></div>
       <div class="sub-window-wrapper">
         <!--小画面div-->
         <template v-if="userList.length">
@@ -151,7 +151,17 @@ export default {
 
     setOrRelieveSilence() {},
 
-    toggleShareScreen() {},
+    toggleShareScreen() {
+      this.rtc
+        .enableLocalScreen(this.isSharing)
+        .then(() => {
+          this.playLocalVideo();
+          this.isSharing = !this.isSharing;
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    },
   },
 };
 </script>
